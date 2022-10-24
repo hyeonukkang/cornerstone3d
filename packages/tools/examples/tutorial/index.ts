@@ -56,34 +56,77 @@ async function run() {
     SeriesInstanceUID:
       '1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561',
     wadoRsRoot: 'https://d3t6nz73ql33tx.cloudfront.net/dicomweb',
-    type: 'STACK',
+    type: 'VOLUME',
   });
 
-  // Final code
   const content = document.getElementById('content');
-  const element = document.createElement('div');
-  element.style.width = '500px';
-  element.style.height = '500px';
 
-  content.appendChild(element);
+  const viewportGrid = document.createElement('div');
+  viewportGrid.style.display = 'flex';
+  viewportGrid.style.flexDirection = 'row';
+
+  // element for axial view
+  const element1 = document.createElement('div');
+  element1.style.width = '500px';
+  element1.style.height = '500px';
+
+  // element for sagittal view
+  const element2 = document.createElement('div');
+  element2.style.width = '500px';
+  element2.style.height = '500px';
+
+  viewportGrid.appendChild(element1);
+  viewportGrid.appendChild(element2);
+
+  content.appendChild(viewportGrid);
 
   const renderingEngineId = 'myRenderingEngine';
-  const viewportId = 'CT_AXIAL_STACK';
   const renderingEngine = new RenderingEngine(renderingEngineId);
 
-  const viewportInput = {
-    viewportId,
-    element,
-    type: ViewportType.STACK,
-  };
+  // note we need to add the cornerstoneStreamingImageVolume: to
+  // use the streaming volume loader
+  const volumeId = 'cornerStreamingImageVolume: myVolume';
 
-  renderingEngine.enableElement(viewportInput);
+  // Define a volume in memory
+  const volume = await volumeLoader.createAndCacheVolume(volumeId, {
+    imageIds,
+  });
 
-  const viewport = renderingEngine.getViewport(viewportInput.viewportId);
+  const viewportId1 = 'CT_AXIAL';
+  const viewportId2 = 'CT_SAGITTAL';
 
-  viewport.setStack(imageIds, 60);
+  const viewportInput = [
+    {
+      viewportId: viewportId1,
+      element: element1,
+      type: ViewportType.ORTHOGRAPHIC,
+      defaultOptions: {
+        orientation: Enums.OrientationAxis.AXIAL,
+      },
+    },
+    {
+      viewportId: viewportId2,
+      element: element2,
+      type: ViewportType.ORTHOGRAPHIC,
+      defaultOptions: {
+        orientation: Enums.OrientationAxis.SAGITTAL,
+      },
+    },
+  ];
 
-  viewport.render();
+  renderingEngine.setViewports(viewportInput);
+
+  // Set the volume to load
+  volume.load();
+
+  setVolumesForViewports(
+    renderingEngine,
+    [{ volumeId }],
+    [viewportId1, viewportId2]
+  );
+
+  // Render the image
+  renderingEngine.renderViewports([viewportId1, viewportId2]);
 }
 
 run();
