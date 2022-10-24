@@ -92,10 +92,8 @@ const resizeObserver = new ResizeObserver(() => {
 const viewportGrid = document.createElement('div');
 
 viewportGrid.style.display = 'grid';
-viewportGrid.style.gridTemplateRows = `[row1-start] 33% [row2-start] 33% [row3-start] 33% [end]`;
-viewportGrid.style.gridTemplateColumns = `[col1-start] 20% [col2-start] 20% [col3-start] 20% [col4-start] 20% [col5-start] 20%[end]`;
 viewportGrid.style.width = '95vw';
-viewportGrid.style.height = '80vh';
+viewportGrid.style.height = '60vh';
 
 const content = document.getElementById('content');
 
