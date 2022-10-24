@@ -35,10 +35,7 @@ console.warn(
 
 // ============================= //
 // ======== Set up page ======== //
-setTitleAndDescription(
-  'Tutorial Playground',
-  'The playground for you to copy paste the codes in the tutorials and run it'
-);
+setTitleAndDescription('Cornerstone.js');
 
 const { ViewportType } = Enums;
 /**
@@ -56,67 +53,148 @@ async function run() {
     SeriesInstanceUID:
       '1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561',
     wadoRsRoot: 'https://d3t6nz73ql33tx.cloudfront.net/dicomweb',
-    type: 'STACK',
+    type: 'VOLUME',
   });
 
   const content = document.getElementById('content');
 
-  const element = document.createElement('div');
+  const viewportGrid = document.createElement('div');
+  viewportGrid.style.display = 'flex';
+  viewportGrid.style.flexDirection = 'row';
 
-  // Disable the default context menu
-  element.oncontextmenu = (e) => e.preventDefault();
-  element.style.width = '500px';
-  element.style.height = '500px';
+  // element for axial view
+  const element1 = document.createElement('div');
+  element1.style.width = '500px';
+  element1.style.height = '500px';
 
-  content.appendChild(element);
+  // element for sagittal view
+  const element2 = document.createElement('div');
+  element2.style.width = '500px';
+  element2.style.height = '500px';
 
+  // element for coronal view
+  const element3 = document.createElement('div');
+  element3.style.width = '500px';
+  element3.style.height = '500px';
+
+  viewportGrid.appendChild(element1);
+  viewportGrid.appendChild(element2);
+  viewportGrid.appendChild(element3);
+
+  content.appendChild(viewportGrid);
+
+  addTool(SegmentationDisplayTool);
+  addTool(BrushTool);
+
+  const volumeName = 'CT_VOLUME_ID';
+  const toolGroupId = 'CT_TOOLGROUP';
+  const volumeLoaderScheme = 'cornerstoneStreamingImageVolume';
+  const volumeId = `${volumeLoaderScheme}:${volumeName}`;
+  const segmentationId = 'MY_SEGMENTATION_ID';
+  // Define tool groups to add the segmentation display tool to
+  const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
+
+  // Segmentation Tools
+  toolGroup.addTool(SegmentationDisplayTool.toolName);
+  toolGroup.addTool(BrushTool.toolName);
+  toolGroup.setToolEnabled(SegmentationDisplayTool.toolName);
+
+  toolGroup.setToolActive(BrushTool.toolName, {
+    bindings: [{ mouseButton: csToolsEnums.MouseBindings.Primary }],
+  });
+
+  // Define a volume in memory for CT
+  const volume = await volumeLoader.createAndCacheVolume(volumeId, {
+    imageIds,
+  });
+
+  // Create a segmentation of the same resolution as the source data for the CT volume
+  await volumeLoader.createAndCacheDerivedVolume(volumeId, {
+    volumeId: segmentationId,
+  });
+
+  // Add the segmentations to state
+  segmentation.addSegmentations([
+    {
+      segmentationId,
+      representation: {
+        // The type of segmentation
+        type: csToolsEnums.SegmentationRepresentations.Labelmap,
+        // The actual segmentation data, in the case of labelmap this is a
+        // reference to the source volume of the segmentation.
+        data: {
+          volumeId: segmentationId,
+        },
+      },
+    },
+  ]);
+
+  // Instantiate a rendering engine
   const renderingEngineId = 'myRenderingEngine';
   const renderingEngine = new RenderingEngine(renderingEngineId);
 
-  const viewportId = 'CT_AXIAL_STACK';
+  // Create the viewports
+  const viewportId1 = 'CT_AXIAL';
+  const viewportId2 = 'CT_SAGITTAL';
+  const viewportId3 = 'CT_CORONAL';
 
-  const viewportInput = {
-    viewportId,
-    element,
-    type: ViewportType.STACK,
-  };
+  const viewportInputArray = [
+    {
+      viewportId: viewportId1,
+      type: ViewportType.ORTHOGRAPHIC,
+      element: element1,
+      defaultOptions: {
+        orientation: Enums.OrientationAxis.AXIAL,
+      },
+    },
+    {
+      viewportId: viewportId2,
+      type: ViewportType.ORTHOGRAPHIC,
+      element: element2,
+      defaultOptions: {
+        orientation: Enums.OrientationAxis.SAGITTAL,
+      },
+    },
+    {
+      viewportId: viewportId3,
+      type: ViewportType.ORTHOGRAPHIC,
+      element: element3,
+      defaultOptions: {
+        orientation: Enums.OrientationAxis.CORONAL,
+      },
+    },
+  ];
 
-  renderingEngine.enableElement(viewportInput);
+  renderingEngine.setViewports(viewportInputArray);
 
-  const viewport = renderingEngine.getViewport(viewportId);
+  toolGroup.addViewport(viewportId1, renderingEngineId);
+  toolGroup.addViewport(viewportId2, renderingEngineId);
+  toolGroup.addViewport(viewportId3, renderingEngineId);
 
-  viewport.setStack(imageIds);
+  // Set the volume to load
+  volume.load();
 
-  viewport.render();
-
-  addTool(ZoomTool);
-  addTool(WindowLevelTool);
-
-  const toolGroupId = 'myToolGroup';
-  const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
-
-  // Add tools to the ToolGroup
-  toolGroup.addTool(ZoomTool.toolName);
-  toolGroup.addTool(WindowLevelTool.toolName);
-
-  toolGroup.addViewport(viewportId, renderingEngineId);
-
-  // Set the windowLevel tool to be active when the mouse left button is pressed
-  toolGroup.setToolActive(WindowLevelTool.toolName, {
-    bindings: [
+  // Set volumes on the viewports
+  await setVolumesForViewports(
+    renderingEngine,
+    [
       {
-        mouseButton: csToolsEnums.MouseBindings.Primary, // Left Click
+        volumeId,
       },
     ],
-  });
+    [viewportId1, viewportId2, viewportId3]
+  );
 
-  toolGroup.setToolActive(ZoomTool.toolName, {
-    bindings: [
-      {
-        mouseButton: csToolsEnums.MouseBindings.Secondary, // Right Click
-      },
-    ],
-  });
+  // // Add the segmentation representation to the toolGroup
+  await segmentation.addSegmentationRepresentations(toolGroupId, [
+    {
+      segmentationId,
+      type: csToolsEnums.SegmentationRepresentations.Labelmap,
+    },
+  ]);
+
+  // Render the image
+  renderingEngine.renderViewports([viewportId1, viewportId2, viewportId3]);
 }
 
 run();
