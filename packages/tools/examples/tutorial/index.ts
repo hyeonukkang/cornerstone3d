@@ -48,26 +48,42 @@ async function run() {
   // Init Cornerstone and related libraries
   await initDemo();
 
-  /**
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   * Copy-paste the code from tutorials below to try them locally.
-   * You can run the tutorial after by running `yarn run example tutorial` when
-   * you are at the root of the tools package directory.
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   */
+  // Add my demo code
+  // Get Cornerstone imageIds and fetch metadata into RAM
+  const imageIds = await createImageIdsAndCacheMetaData({
+    StudyInstanceUID:
+      '1.3.6.1.4.1.14519.5.2.1.7009.2403.334240657131972136850343327463',
+    SeriesInstanceUID:
+      '1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561',
+    wadoRsRoot: 'https://d3t6nz73ql33tx.cloudfront.net/dicomweb',
+    type: 'STACK',
+  });
+
+  // Final code
+  const content = document.getElementById('content');
+  const element = document.createElement('div');
+  element.style.width = '500px';
+  element.style.height = '500px';
+
+  content.appendChild(element);
+
+  const renderingEngineId = 'myRenderingEngine';
+  const viewportId = 'CT_AXIAL_STACK';
+  const renderingEngine = new RenderingEngine(renderingEngineId);
+
+  const viewportInput = {
+    viewportId,
+    element,
+    type: ViewportType.STACK,
+  };
+
+  renderingEngine.enableElement(viewportInput);
+
+  const viewport = renderingEngine.getViewport(viewportInput.viewportId);
+
+  viewport.setStack(imageIds, 60);
+
+  viewport.render();
 }
 
 run();
