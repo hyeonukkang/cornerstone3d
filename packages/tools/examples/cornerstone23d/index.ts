@@ -1,6 +1,5 @@
 import {
   RenderingEngine,
-  Types,
   Enums,
   setVolumesForViewports,
   volumeLoader,
@@ -18,12 +17,7 @@ const {
   ToolGroupManager,
   Enums: csToolsEnums,
   WindowLevelTool,
-  PanTool,
-  ZoomTool,
-  StackScrollMouseWheelTool,
   synchronizers,
-  MIPJumpToClickTool,
-  VolumeRotateMouseWheelTool,
   CrosshairsTool,
 } = cornerstoneTools;
 
@@ -60,13 +54,13 @@ addDropdownToToolbar({
       const toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
 
       if (toolName === WindowLevelTool.toolName) {
-        toolGroup.setToolPassive(CrosshairsTool.toolName);
-        toolGroup.setToolActive(WindowLevelTool.toolName, {
+        toolGroup?.setToolPassive(CrosshairsTool.toolName);
+        toolGroup?.setToolActive(WindowLevelTool.toolName, {
           bindings: [{ mouseButton: MouseBindings.Primary }],
         });
       } else {
-        toolGroup.setToolDisabled(WindowLevelTool.toolName);
-        toolGroup.setToolActive(CrosshairsTool.toolName, {
+        toolGroup?.setToolDisabled(WindowLevelTool.toolName);
+        toolGroup?.setToolActive(CrosshairsTool.toolName, {
           bindings: [{ mouseButton: MouseBindings.Primary }],
         });
       }
@@ -90,7 +84,7 @@ viewportGrid.style.height = '60vh';
 
 const content = document.getElementById('content');
 
-content.appendChild(viewportGrid);
+content?.appendChild(viewportGrid);
 
 const element1_1 = document.createElement('div');
 const element1_2 = document.createElement('div');
@@ -146,21 +140,21 @@ const viewportReferenceLineSlabThicknessControlsOn = [
   viewportIds.CT.CORONAL,
 ];
 
-function getReferenceLineColor(viewportId) {
+function getReferenceLineColor(viewportId: string | number) {
   return viewportColors[viewportId];
 }
 
-function getReferenceLineControllable(viewportId) {
+function getReferenceLineControllable(viewportId: string) {
   const index = viewportReferenceLineControllable.indexOf(viewportId);
   return index !== -1;
 }
 
-function getReferenceLineDraggableRotatable(viewportId) {
+function getReferenceLineDraggableRotatable(viewportId: string) {
   const index = viewportReferenceLineDraggableRotatable.indexOf(viewportId);
   return index !== -1;
 }
 
-function getReferenceLineSlabThicknessControlsOn(viewportId) {
+function getReferenceLineSlabThicknessControlsOn(viewportId: string) {
   const index =
     viewportReferenceLineSlabThicknessControlsOn.indexOf(viewportId);
   return index !== -1;
@@ -168,20 +162,13 @@ function getReferenceLineSlabThicknessControlsOn(viewportId) {
 
 function setUpToolGroups() {
   // Add tools to Cornerstone3D
-  // cornerstoneTools.addTool(WindowLevelTool);
-  // cornerstoneTools.addTool(PanTool);
-  // cornerstoneTools.addTool(ZoomTool);
-  // cornerstoneTools.addTool(StackScrollMouseWheelTool);
-  cornerstoneTools.addTool(MIPJumpToClickTool);
-  // cornerstoneTools.addTool(VolumeRotateMouseWheelTool);
   cornerstoneTools.addTool(CrosshairsTool);
 
   const ctToolGroup = ToolGroupManager.createToolGroup(ctToolGroupId);
-
-  ctToolGroup.addViewport(viewportIds.CT.AXIAL, renderingEngineId);
-  ctToolGroup.addViewport(viewportIds.CT.SAGITTAL, renderingEngineId);
-  ctToolGroup.addViewport(viewportIds.CT.CORONAL, renderingEngineId);
-  ctToolGroup.addTool(CrosshairsTool.toolName, {
+  ctToolGroup?.addViewport(viewportIds.CT.SAGITTAL, renderingEngineId);
+  ctToolGroup?.addViewport(viewportIds.CT.CORONAL, renderingEngineId);
+  ctToolGroup?.addViewport(viewportIds.CT.AXIAL, renderingEngineId);
+  ctToolGroup?.addTool(CrosshairsTool.toolName, {
     getReferenceLineColor,
     getReferenceLineControllable,
     getReferenceLineDraggableRotatable,
@@ -190,40 +177,15 @@ function setUpToolGroups() {
 
   // Here is the difference in the toolGroups used, that we need to specify the
   // volume to use for the WindowLevelTool for the fusion viewports
-  ctToolGroup.addTool(WindowLevelTool.toolName);
-
   [ctToolGroup].forEach((toolGroup) => {
-    toolGroup.setToolActive(WindowLevelTool.toolName, {
-      bindings: [
-        {
-          mouseButton: MouseBindings.Primary, // Left Click
-        },
-      ],
-    });
-    toolGroup.setToolActive(PanTool.toolName, {
-      bindings: [
-        {
-          mouseButton: MouseBindings.Auxiliary, // Middle Click
-        },
-      ],
-    });
-    toolGroup.setToolActive(ZoomTool.toolName, {
-      bindings: [
-        {
-          mouseButton: MouseBindings.Secondary, // Right Click
-        },
-      ],
-    });
-
-    toolGroup.setToolActive(StackScrollMouseWheelTool.toolName);
-    toolGroup.setToolPassive(CrosshairsTool.toolName);
+    toolGroup?.setToolPassive(CrosshairsTool.toolName);
   });
 
   // MIP Tool Groups
   const mipToolGroup = ToolGroupManager.createToolGroup(mipToolGroupUID);
 
-  mipToolGroup.addTool('VolumeRotateMouseWheel');
-  mipToolGroup.addTool('MIPJumpToClickTool', {
+  mipToolGroup?.addTool('VolumeRotateMouseWheel');
+  mipToolGroup?.addTool('MIPJumpToClickTool', {
     targetViewportIds: [
       viewportIds.CT.AXIAL,
       viewportIds.CT.SAGITTAL,
@@ -231,18 +193,7 @@ function setUpToolGroups() {
     ],
   });
 
-  // Set the initial state of the tools, here we set one tool active on left click.
-  // This means left click will draw that tool.
-  mipToolGroup.setToolActive('MIPJumpToClickTool', {
-    bindings: [
-      {
-        mouseButton: MouseBindings.Primary, // Left Click
-      },
-    ],
-  });
-  // As the Stack Scroll mouse wheel is a tool using the `mouseWheelCallback`
-  // hook instead of mouse buttons, it does not need to assign any mouse button.
-  mipToolGroup.setToolActive('VolumeRotateMouseWheel');
+  mipToolGroup?.setToolActive('VolumeRotateMouseWheel');
 }
 
 function setUpSynchronizers() {
@@ -323,7 +274,6 @@ async function setUpDisplay() {
   });
 
   // Create the viewports
-
   const viewportInputArray = [
     {
       viewportId: viewportIds.CT.AXIAL,
@@ -351,6 +301,7 @@ async function setUpDisplay() {
     },
   ];
 
+  if (!renderingEngine) return;
   renderingEngine.setViewports(viewportInputArray);
 
   // Set the volumes to load
