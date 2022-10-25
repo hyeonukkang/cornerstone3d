@@ -33,7 +33,6 @@ const volumeLoaderScheme = 'cornerstoneStreamingImageVolume'; // Loader id which
 const ctVolumeName = 'CT_VOLUME_ID'; // Id of the volume less loader prefix
 const ctVolumeId = `${volumeLoaderScheme}:${ctVolumeName}`; // VolumeId with loader id + volume id
 const ctToolGroupId = 'CT_TOOLGROUP_ID';
-const mipToolGroupUID = 'MIP_TOOLGROUP_ID';
 
 const viewportIds = {
   CT: { AXIAL: 'CT_AXIAL', SAGITTAL: 'CT_SAGITTAL', CORONAL: 'CT_CORONAL' },
@@ -180,20 +179,6 @@ function setUpToolGroups() {
   [ctToolGroup].forEach((toolGroup) => {
     toolGroup?.setToolPassive(CrosshairsTool.toolName);
   });
-
-  // MIP Tool Groups
-  const mipToolGroup = ToolGroupManager.createToolGroup(mipToolGroupUID);
-
-  mipToolGroup?.addTool('VolumeRotateMouseWheel');
-  mipToolGroup?.addTool('MIPJumpToClickTool', {
-    targetViewportIds: [
-      viewportIds.CT.AXIAL,
-      viewportIds.CT.SAGITTAL,
-      viewportIds.CT.CORONAL,
-    ],
-  });
-
-  mipToolGroup?.setToolActive('VolumeRotateMouseWheel');
 }
 
 function setUpSynchronizers() {
